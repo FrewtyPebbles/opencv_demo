@@ -8,6 +8,7 @@ import cv2
 import os
 import mediapipe as mp
 
+# DETECTORS
 faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 if faceCascade.empty():
     print("Error: Failed to load face cascade classifier.")
@@ -18,6 +19,29 @@ if eyeCascade.empty():
 
 face_mesh = mp.solutions.face_mesh.FaceMesh(max_num_faces=3, refine_landmarks=True, min_detection_confidence=0.7, min_tracking_confidence=0.9)
 
+emotion_classifier_net = cv2.dnn.readNetFromONNX("emotion_recognition_model.onnx")
+
+EMOTION_CATEGORIES = ["angry", "disgusted", "fearful", "happy", "neutral", "sad", "surprised"]
+
+def classify_emotion(face:cv2.typing.MatLike) -> str:
+    face = cv2.resize(face, (48, 48))
+    # Resize image to match model input size
+
+    face = face.astype(np.float32) / 255.0
+
+    # Add batch dimension and channels (convert to (1, 1, 48, 48))
+    face = np.expand_dims(face, axis=0)  # Shape becomes (1, 48, 48)
+    face = np.expand_dims(face, axis=1)  # Shape becomes (1, 1, 48, 48)
+
+    emotion_classifier_net.setInput(face)
+
+    output = emotion_classifier_net.forward()
+
+    predicted_class = EMOTION_CATEGORIES[np.argmax(output)]
+
+    return predicted_class
+
+# API
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Code to run during app startup (before the app is fully started)
     print("App is starting up...")
@@ -66,7 +90,7 @@ async def track(file: UploadFile = File(...)):
 
             eyes = eyeCascade.detectMultiScale(cropped_face_gray)
 
-            face = {'x':int(x), 'y':int(y), 'w':int(w), 'h':int(h)}
+            face = {'x':int(x), 'y':int(y), 'w':int(w), 'h':int(h)+10}
             eyes_list = []
             for ex,ey,ew,eh in eyes:
 
@@ -92,11 +116,12 @@ async def track(file: UploadFile = File(...)):
                     'pupil':pupil
                 })
 
-
+            emotion = classify_emotion(cropped_face_gray)
 
             response.append({
                 'face':face,
-                'eyes':eyes_list[::2]
+                'eyes':eyes_list[::2],
+                'emotion':emotion
             })
 
         return response

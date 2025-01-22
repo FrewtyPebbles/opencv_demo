@@ -104,10 +104,21 @@ function face_str(face) {
     return `${face.x} ${face.y} ${face.w} ${face.h}`
 }
 
-function show_face(bbox, prev_x, dims) {
+function show_face(face, prev_x, dims) {
+    const bbox = face.face
     faces_ctx.font = "20px serif"
     faces_ctx.clearRect(prev_x, 0, dims.x, dims.y + 90)
-    faces_ctx.drawImage(webcam, bbox.x*RES_SCALE.w, bbox.y*RES_SCALE.h, bbox.w*RES_SCALE.w, bbox.h*RES_SCALE.h, prev_x, 0, dims.x, dims.y);
+    faces_ctx.drawImage(webcam,
+        bbox.x*RES_SCALE.w, bbox.y*RES_SCALE.h,
+        bbox.w*RES_SCALE.w, bbox.h*RES_SCALE.h,
+        prev_x, 0,
+        dims.x, dims.y
+    );
+
+    faces_ctx.font = "bold 12px serif";
+    faces_ctx.fillStyle = "#000000"
+
+    faces_ctx.fillText(`emotion ${face.emotion}`, prev_x, dims.y + 10)
 }
 
 function draw_tracking_data(face_data, update_faces = false) {
@@ -118,6 +129,8 @@ function draw_tracking_data(face_data, update_faces = false) {
     for (const face of face_data) {
         ctx.strokeStyle = "#00ff1e"
         ctx.fillStyle = "#00ff1e"
+
+        ctx.fillText(`emotion ${face.emotion}`, face.face.x*RES_SCALE.w, face.face.y*RES_SCALE.h)
 
         ctx.strokeRect(face.face.x*RES_SCALE.w, face.face.y*RES_SCALE.h, face.face.w*RES_SCALE.w, face.face.h*RES_SCALE.h);
 
@@ -131,7 +144,7 @@ function draw_tracking_data(face_data, update_faces = false) {
         }
 
         if (update_faces)
-            show_face(face.face, prev_x, dims)
+            show_face(face, prev_x, dims)
         prev_x += dims.x*RES_SCALE.w
     }
 }
