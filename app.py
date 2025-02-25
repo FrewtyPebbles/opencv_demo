@@ -23,7 +23,11 @@ emotion_classifier_net = cv2.dnn.readNetFromONNX("emotion_recognition_model.onnx
 
 EMOTION_CATEGORIES = ["angry", "disgusted", "fearful", "happy", "neutral", "sad", "surprised"]
 
-def classify_emotion(face:cv2.typing.MatLike) -> str:
+def softmax(x):
+    exp_x = np.exp(x - np.max(x))  # Subtract max for numerical stability
+    return exp_x / np.sum(exp_x)
+
+def classify_emotion(face:cv2.typing.MatLike) -> tuple[str, dict[str, float]]:
     face = cv2.resize(face, (48, 48))
     # Resize image to match model input size
 
@@ -39,7 +43,7 @@ def classify_emotion(face:cv2.typing.MatLike) -> str:
 
     predicted_class = EMOTION_CATEGORIES[np.argmax(output)]
 
-    return predicted_class
+    return predicted_class, dict(zip(EMOTION_CATEGORIES, map(float, softmax(output[0]))))
 
 # API
 async def lifespan(app: FastAPI) -> AsyncGenerator:
@@ -116,12 +120,13 @@ async def track(file: UploadFile = File(...)):
                     'pupil':pupil
                 })
 
-            emotion = classify_emotion(cropped_face_gray)
+            emotion, percentages = classify_emotion(cropped_face_gray)
 
             response.append({
                 'face':face,
                 'eyes':eyes_list[::2],
-                'emotion':emotion
+                'emotion':emotion,
+                'percentages':percentages
             })
 
         return response

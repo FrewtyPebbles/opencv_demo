@@ -118,7 +118,14 @@ function show_face(face, prev_x, dims) {
     faces_ctx.font = "bold 12px serif";
     faces_ctx.fillStyle = "#000000"
 
-    faces_ctx.fillText(`emotion ${face.emotion}`, prev_x, dims.y + 10)
+    faces_ctx.fillText(`emotion   ${face.emotion}`, prev_x, dims.y + 10)
+    faces_ctx.fillText(`${(face.percentages.angry * 100).toPrecision(3)}% anger`, prev_x, dims.y + 10 + 20)
+    faces_ctx.fillText(`${(face.percentages.disgusted * 100).toPrecision(3)}% disgust`, prev_x, dims.y + 10 + 20*2)
+    faces_ctx.fillText(`${(face.percentages.fearful * 100).toPrecision(3)}% fear`, prev_x, dims.y + 10 + 20*3)
+    faces_ctx.fillText(`${(face.percentages.happy * 100).toPrecision(3)}% happy`, prev_x, dims.y + 10 + 20*4)
+    faces_ctx.fillText(`${(face.percentages.neutral * 100).toPrecision(3)}% neutral`, prev_x, dims.y + 10 + 20*5)
+    faces_ctx.fillText(`${(face.percentages.sad * 100).toPrecision(3)}% sad`, prev_x, dims.y + 10 + 20*6)
+    faces_ctx.fillText(`${(face.percentages.surprised * 100).toPrecision(3)}% surprised`, prev_x, dims.y + 10 + 20*7)
 }
 
 function draw_tracking_data(face_data, update_faces = false) {
