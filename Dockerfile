@@ -1,28 +1,33 @@
-# Use an official Miniconda base image
-FROM continuumio/miniconda3
+# Use a lightweight Python base image
+FROM python:3.11-slim
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy the application and requirements
+# Install system dependencies for OpenGL / Mediapipe
+RUN apt-get update && apt-get install -y libgl1 git curl && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y libglib2.0-0t64 && rm -rf /var/lib/apt/lists/*
+
+
+# Install uv (Python version manager)
+RUN pip install uv
+
+# Copy application and requirements
 COPY app.py /app/app.py
-COPY requirements.txt /app/requirements.txt
+COPY pyproject.toml /app/pyproject.toml
 COPY /static /app/static
 
-# Initialize Conda and create a new environment
-RUN conda init bash && \
-    bash -c "source ~/.bashrc && \
-    conda create -n env python=3.12 -y && \
-    conda activate env && \
-    pip install --no-cache-dir -r requirements.txt"
+# Install Python dependencies inside uv environment
+RUN uv lock
+RUN uv sync
 
-# Install the OpenGL library
-RUN apt-get update && apt-get install -y libgl1
+# Environment variables for uvicorn
+ENV WORKERS=8
+ENV UVICORN_ARGS=""
 
-ENV WORKERS=8 UVICORN_ARGS=""
-
-# Expose the FastAPI default port
+# Expose FastAPI default port
 EXPOSE 8000
 
-# Command to run the FastAPI server
-CMD ["bash", "-c", "source ~/.bashrc && conda activate env && uvicorn app:app --host 0.0.0.0 --port 8000 --workers ${WORKERS} ${UVICORN_ARGS}"]
+# Use uv run to execute uvicorn, respecting WORKERS and UVICORN_ARGS
+CMD ["bash", "-c", "uv run uvicorn app:app --host 0.0.0.0 --port 8000 --workers $WORKERS $UVICORN_ARGS"]
