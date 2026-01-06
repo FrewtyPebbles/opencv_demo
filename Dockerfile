@@ -16,6 +16,7 @@ RUN pip install uv
 # Copy application and requirements
 COPY app.py /app/app.py
 COPY pyproject.toml /app/pyproject.toml
+COPY emotion_recognition_model.onnx /app/emotion_recognition_model.onnx
 COPY /static /app/static
 
 # Install Python dependencies inside uv environment
